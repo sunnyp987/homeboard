@@ -1,0 +1,10 @@
+[Unit]
+Description=Fetch calendar data for the Home Board
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/homeboard/homeboard
+ExecStart=/usr/bin/python3 /home/homeboard/homeboard/fetch_data.py
+User=homeboard

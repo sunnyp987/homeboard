@@ -124,6 +124,19 @@ body{
   color:var(--gold);
   font-weight:700;
 }
+.cal td{position:relative;}
+.cal td.has-events::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:0.1rem;
+  transform:translateX(-50%);
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:var(--blue);
+}
+.cal td.dim.has-events::after{background:var(--ink-faint);}
 .legend{
   display:flex;
   gap:1.1rem;
@@ -171,7 +184,19 @@ body{
 }
 .wcard .tag.clean{background:var(--green-soft); color:var(--green);}
 .wcard .tag.meal{background:var(--rose-soft); color:var(--rose);}
+.wcard .tag.cal{background:var(--blue-soft); color:var(--blue);}
 .wcard .tag.empty{visibility:hidden;}
+.wcard .more{font-size:0.7rem; color:var(--ink-soft); margin-left:0.4rem;}
+.stale{
+  position:fixed;
+  right:0.6rem;
+  bottom:0.5rem;
+  font-size:0.68rem;
+  color:var(--rose);
+  background:var(--rose-soft);
+  border-radius:999px;
+  padding:0.15rem 0.6rem;
+}
 .timeline{display:flex; flex-direction:column; gap:0.6rem;}
 .trow{display:flex; gap:0.9rem;}
 .trow .time{
@@ -222,7 +247,7 @@ body{
 <div class="board">
   <div class="head">
     <div class="brand">
-      <h1>Calendar Board</h1>
+      <h1>The Home Board</h1>
       <div class="tag">Family Command Center</div>
     </div>
     <div class="today">
@@ -268,15 +293,7 @@ body{
 
     <div class="card">
       <h2>This Week</h2>
-      <div class="week-strip">
-        <div class="wcard"><span class="dow">SUN</span><span class="dnum">2</span><span class="tag clean">bathrooms</span></div>
-        <div class="wcard"><span class="dow">MON</span><span class="dnum">3</span><span class="tag empty">—</span></div>
-        <div class="wcard"><span class="dow">TUE</span><span class="dnum">4</span><span class="tag meal">baby food prep</span></div>
-        <div class="wcard"><span class="dow">WED</span><span class="dnum">5</span><span class="tag empty">—</span></div>
-        <div class="wcard"><span class="dow">THU</span><span class="dnum">6</span><span class="tag clean">laundry</span></div>
-        <div class="wcard"><span class="dow">FRI</span><span class="dnum">7</span><span class="tag meal">date night</span></div>
-        <div class="wcard today"><span class="dow">SAT</span><span class="dnum">8</span><span class="tag clean">vacuum + mop</span></div>
-      </div>
+      <div class="week-strip" id="js-week"></div>
     </div>
 
     <div class="card notes">
@@ -336,9 +353,115 @@ body{
 </div>
 
 <script>
-  // Auto-reload so a fresh git pull on the Pi shows up without touching the screen.
-  // Also picks up any future live-data wiring (Sheets/Calendar) on the same cadence.
+(function () {
+  const DAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const DOW3  = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth(), today = now.getDate();
+
+  // Local YYYY-MM-DD. Not toISOString(), which converts to UTC and lands on
+  // the wrong day for anyone west of Greenwich after early evening.
+  const key = d =>
+    d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+
+  document.getElementById('js-dow').textContent  = DAYS[now.getDay()];
+  document.getElementById('js-date').textContent = MONTHS[m] + ' ' + today + ', ' + y;
+  document.querySelector('.cal h2').textContent  = MONTHS[m];
+
+  function renderMonth(events) {
+    const firstDow  = new Date(y, m, 1).getDay();
+    const daysThis  = new Date(y, m + 1, 0).getDate();
+    const daysPrev  = new Date(y, m, 0).getDate();
+
+    const cells = [];
+    for (let i = firstDow - 1; i >= 0; i--)
+      cells.push({ n: daysPrev - i, date: new Date(y, m - 1, daysPrev - i), dim: true });
+    for (let d = 1; d <= daysThis; d++)
+      cells.push({ n: d, date: new Date(y, m, d), dim: false });
+    let nx = 1;
+    while (cells.length % 7 !== 0) {
+      cells.push({ n: nx, date: new Date(y, m + 1, nx), dim: true });
+      nx++;
+    }
+
+    let html = '';
+    for (let i = 0; i < cells.length; i += 7) {
+      html += '<tr>';
+      for (const c of cells.slice(i, i + 7)) {
+        const cls = [];
+        if (c.dim) cls.push('dim');
+        if (!c.dim && c.n === today) cls.push('today');
+        if (events[key(c.date)]) cls.push('has-events');
+        const attr = cls.length ? ' class="' + cls.join(' ') + '"' : '';
+        html += '<td' + attr + '>' +
+          (cls.includes('today') ? '<span>' + c.n + '</span>' : c.n) +
+          '</td>';
+      }
+      html += '</tr>';
+    }
+    document.querySelector('.cal tbody').innerHTML = html;
+  }
+
+  function renderWeek(events) {
+    const sunday = new Date(y, m, today - now.getDay());
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + i);
+      const list = events[key(d)] || [];
+      const isToday = key(d) === key(now);
+
+      let tag = '<span class="tag empty">—</span>';
+      if (list.length) {
+        const first = list[0];
+        const label = (first.time ? first.time + ' ' : '') + first.summary;
+        const more  = list.length > 1 ? '<span class="more">+' + (list.length - 1) + '</span>' : '';
+        tag = '<span class="tag cal">' + esc(label) + '</span>' + more;
+      }
+
+      html += '<div class="wcard' + (isToday ? ' today' : '') + '">' +
+                '<span class="dow">' + DOW3[d.getDay()] + '</span>' +
+                '<span class="dnum">' + d.getDate() + '</span>' +
+                tag +
+              '</div>';
+    }
+    document.getElementById('js-week').innerHTML = html;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, c =>
+      ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  }
+
+  // Render with whatever we have. If the fetch fails the board still shows a
+  // correct, current calendar — it just has no events on it, which beats a
+  // blank screen or a page stuck on last month.
+  fetch('data.json?t=' + Date.now())
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(data => {
+      const events = data.days || {};
+      renderMonth(events);
+      renderWeek(events);
+
+      // Flag a feed that has stopped updating — otherwise stale events look
+      // exactly like real ones.
+      const age = (Date.now() - new Date(data.generated).getTime()) / 3600000;
+      if (age > 6) {
+        const el = document.createElement('div');
+        el.className = 'stale';
+        el.textContent = 'calendar last synced ' + Math.round(age) + 'h ago';
+        document.body.appendChild(el);
+      }
+    })
+    .catch(() => { renderMonth({}); renderWeek({}); });
+
+  // Rolls the date over at midnight and picks up new calendar data.
   setTimeout(() => location.reload(), 5 * 60 * 1000);
+})();
 </script>
 </body>
 </html>
