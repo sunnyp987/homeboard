@@ -36,6 +36,7 @@ TABS = {
     "baby":     ("Baby Schedule",     "Time"),
     "notes":    ("Notes",             "Note"),
     "wins":     ("Wins",              "Win"),
+    "events":   ("Events",            "Date"),
 }
 
 
@@ -43,8 +44,10 @@ def load_config():
     if not CONFIG.exists():
         sys.exit(f"No config.json at {CONFIG} — copy config.example.json and fill it in.")
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
-    if not cfg.get("ical_url", "").startswith("http"):
-        sys.exit("config.json needs an 'ical_url' — the calendar's secret iCal address.")
+    # Either source alone is a valid setup: Google Calendar, the Sheet's Events
+    # tab, or both merged.
+    if not cfg.get("ical_url", "").startswith("http") and not cfg.get("sheet_id", "").strip():
+        sys.exit("config.json needs an 'ical_url', a 'sheet_id', or both.")
     return cfg
 
 
@@ -101,12 +104,50 @@ def fmt_time(dt, tz):
     return f"{hour}:{local.minute:02d}{suffix}"
 
 
+def parse_sheet_date(raw, today):
+    """Accept what people and Sheets actually type: 2026-08-15, 8/15/2026, 8/15.
+
+    A bare M/D assumes the current year — except in late December, where a
+    January date means next year, not one eleven months gone.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
+        try:
+            return datetime.strptime(raw, fmt).date()
+        except ValueError:
+            pass
+    try:
+        month, day = (int(p) for p in raw.split("/")[:2])
+    except (ValueError, IndexError):
+        return None
+    year = today.year + 1 if (today.month == 12 and month == 1) else today.year
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def merge_sheet_events(days, rows, today):
+    """Fold the Events tab into the same day-keyed dict the calendar produces."""
+    added = 0
+    for r in rows:
+        when = parse_sheet_date(r.get("Date"), today)
+        summary = (r.get("Event") or "").strip()
+        if not when or not summary:
+            continue
+        time = (r.get("Time") or "").strip() or None
+        days.setdefault(when.isoformat(), []).append({"time": time, "summary": summary})
+        added += 1
+    for entries in days.values():
+        entries.sort(key=lambda e: (e["time"] is not None, e["time"] or ""))
+    return added
+
+
 def main():
     cfg = load_config()
     tz = ZoneInfo(cfg.get("timezone", "America/Chicago"))
-
-    with urllib.request.urlopen(cfg["ical_url"], timeout=30) as resp:
-        cal = icalendar.Calendar.from_ical(resp.read())
 
     # Cover the visible month grid plus padding weeks on either side, so
     # trailing/leading days of adjacent months get their dots too.
@@ -114,26 +155,29 @@ def main():
     start = today.replace(day=1) - timedelta(days=7)
     end = (today.replace(day=1) + timedelta(days=62)).replace(day=1) + timedelta(days=7)
 
-    # recurring_ical_events expands RRULEs — weekly trash day, monthly
-    # deep clean, etc. Hand-rolled ICS parsing silently drops all of those.
-    events = recurring_ical_events.of(cal).between(start, end)
-
     days = {}
-    for ev in events:
-        raw = ev["DTSTART"].dt
-        if isinstance(raw, datetime):
-            key = raw.astimezone(tz).date().isoformat()
-            entry = {"time": fmt_time(raw, tz), "summary": str(ev.get("SUMMARY", "Busy"))}
-        else:  # all-day events carry a plain date
-            key = raw.isoformat()
-            entry = {"time": None, "summary": str(ev.get("SUMMARY", "Busy"))}
-        days.setdefault(key, []).append(entry)
+    if cfg.get("ical_url", "").startswith("http"):
+        with urllib.request.urlopen(cfg["ical_url"], timeout=30) as resp:
+            cal = icalendar.Calendar.from_ical(resp.read())
+
+        # recurring_ical_events expands RRULEs — weekly trash day, monthly
+        # deep clean, etc. Hand-rolled ICS parsing silently drops all of those.
+        for ev in recurring_ical_events.of(cal).between(start, end):
+            raw = ev["DTSTART"].dt
+            if isinstance(raw, datetime):
+                key = raw.astimezone(tz).date().isoformat()
+                entry = {"time": fmt_time(raw, tz), "summary": str(ev.get("SUMMARY", "Busy"))}
+            else:  # all-day events carry a plain date
+                key = raw.isoformat()
+                entry = {"time": None, "summary": str(ev.get("SUMMARY", "Busy"))}
+            days.setdefault(key, []).append(entry)
 
     for entries in days.values():
         # All-day first, then chronological.
         entries.sort(key=lambda e: (e["time"] is not None, e["time"] or ""))
 
     sheets = fetch_sheets(cfg)
+    from_sheet = merge_sheet_events(days, sheets.pop("events", []), today)
 
     OUT.write_text(
         json.dumps(
@@ -147,7 +191,9 @@ def main():
         encoding="utf-8",
     )
     counts = ", ".join(f"{k} {len(v)}" for k, v in sheets.items()) or "no sheet configured"
-    print(f"wrote {OUT} — {sum(len(v) for v in days.values())} events across {len(days)} days")
+    total = sum(len(v) for v in days.values())
+    print(f"wrote {OUT} — {total} events across {len(days)} days "
+          f"({from_sheet} from the Events tab)")
     print(f"  sheets: {counts}")
 
 

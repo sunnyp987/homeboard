@@ -232,9 +232,23 @@ body{
 .rot tr:last-child td{border-bottom:none;}
 .rot .task{font-weight:600;}
 .rot .freq{color:var(--ink-soft); font-size:0.74rem;}
-.rot .who{text-align:right; font-size:0.66rem; font-weight:700; letter-spacing:0.06em;}
-.rot .who.both{color:var(--gold);}
-.rot .who.chief{color:var(--green);}
+.rot .who{
+  text-align:right;
+  font-size:0.66rem;
+  font-weight:700;
+  letter-spacing:0.06em;
+}
+.rot .who span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:1.35rem;
+  height:1.35rem;
+  border-radius:50%;
+}
+.rot .who.b span{background:var(--gold-soft);   color:var(--gold);}
+.rot .who.c span{background:var(--green-soft);  color:var(--green);}
+.rot .who.s span{background:var(--blue-soft);   color:var(--blue);}
 .meals{display:flex; flex-direction:column; gap:0.45rem;}
 .mrow{display:flex; justify-content:space-between; gap:0.8rem; font-size:0.84rem;}
 .mrow .d{color:var(--ink-soft); font-weight:600; width:2.5rem; flex-shrink:0;}
@@ -328,12 +342,12 @@ body{
     <div class="card rot">
       <h2>Cleaning Rotation</h2>
       <table>
-        <tr><td><div class="task">Kitchen wipe-down</div><div class="freq">Daily</div></td><td class="who both">BOTH</td></tr>
-        <tr><td><div class="task">Vacuum + mop</div><div class="freq">Weekly — Sat</div></td><td class="who chief">CHIEF</td></tr>
-        <tr><td><div class="task">Laundry</div><div class="freq">Twice weekly</div></td><td class="who both">BOTH</td></tr>
-        <tr><td><div class="task">Bathrooms</div><div class="freq">Weekly — Sun</div></td><td class="who chief">CHIEF</td></tr>
-        <tr><td><div class="task">Nursery tidy</div><div class="freq">Daily</div></td><td class="who both">BOTH</td></tr>
-        <tr><td><div class="task">Deep clean</div><div class="freq">Monthly</div></td><td class="who both">BOTH</td></tr>
+        <tr><td><div class="task">Kitchen wipe-down</div><div class="freq">Daily</div></td><td class="who b"><span>B</span></td></tr>
+        <tr><td><div class="task">Vacuum + mop</div><div class="freq">Weekly — Sat</div></td><td class="who c"><span>C</span></td></tr>
+        <tr><td><div class="task">Laundry</div><div class="freq">Twice weekly</div></td><td class="who b"><span>B</span></td></tr>
+        <tr><td><div class="task">Bathrooms</div><div class="freq">Weekly — Sun</div></td><td class="who c"><span>C</span></td></tr>
+        <tr><td><div class="task">Nursery tidy</div><div class="freq">Daily</div></td><td class="who b"><span>B</span></td></tr>
+        <tr><td><div class="task">Deep clean</div><div class="freq">Monthly</div></td><td class="who b"><span>B</span></td></tr>
       </table>
     </div>
 
@@ -457,11 +471,13 @@ body{
   function renderCleaning(rows) {
     if (!rows || !rows.length) return;
     document.querySelector('.rot table').innerHTML = rows.map(r => {
-      const who = (r.Assigned || '').trim();
-      const cls = who.toLowerCase() === 'chief' ? 'chief' : 'both';
+      const who = (r.Assigned || '').trim().toUpperCase();
+      // Only S/C/B get a colour. Anything else still shows, uncoloured, so a
+      // stray value is visible rather than silently dropped.
+      const cls = ['S', 'C', 'B'].includes(who) ? ' ' + who.toLowerCase() : '';
       return '<tr><td><div class="task">' + esc(r.Task) + '</div>' +
              '<div class="freq">' + esc(r.Frequency || '') + '</div></td>' +
-             '<td class="who ' + cls + '">' + esc(who.toUpperCase()) + '</td></tr>';
+             '<td class="who' + cls + '"><span>' + esc(who) + '</span></td></tr>';
     }).join('');
   }
 
