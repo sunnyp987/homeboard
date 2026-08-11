@@ -5,6 +5,6 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/pi/homeboard
+WorkingDirectory=/home/homeboard/homeboard
 ExecStart=/usr/bin/git pull --ff-only
-User=pi
+User=homeboard
