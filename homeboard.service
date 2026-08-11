@@ -3,11 +3,11 @@ Description=Home Board dashboard file server
 After=network.target
 
 [Service]
-WorkingDirectory=/home/pi/homeboard
+WorkingDirectory=/home/homeboard/homeboard
 ExecStart=/usr/bin/python3 -m http.server 8080
 Restart=always
 RestartSec=3
-User=pi
+User=homeboard
 
 [Install]
 WantedBy=multi-user.target
