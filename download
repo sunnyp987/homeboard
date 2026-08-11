@@ -1,9 +1,0 @@
-# The secret iCal URL is a credential — never commit it.
-config.json
-credentials.json
-*.env
-
-# Generated on the Pi by fetch_data.py
-data.json
-
-__pycache__/
