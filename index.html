@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>The Home Board</title>
+<style>
+:root{
+  --paper:#ffffff;
+  --paper-2:#faf9f6;
+  --ink:#2a2a28;
+  --ink-soft:#918f87;
+  --ink-faint:#c9c7bd;
+  --rule:#e6e3d9;
+  --gold:#b8863b;
+  --gold-soft:#f2e6cd;
+  --blue:#6f93b3;
+  --blue-soft:#e6edf3;
+  --green:#7a9a6e;
+  --green-soft:#e6ede2;
+  --rose:#bd7f76;
+  --rose-soft:#f3e5e2;
+}
+*{box-sizing:border-box;}
+html,body{height:100%; margin:0;}
+body{
+  background:var(--paper-2);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:1.6rem 2rem;
+  overflow:hidden;
+}
+.board{
+  max-width:1880px;
+  margin:0 auto;
+  background:var(--paper);
+  border-radius:6px;
+  padding:1.6rem 2.2rem 2rem;
+}
+.head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding-bottom:1rem;
+  border-bottom:2px solid var(--ink);
+  margin-bottom:1.4rem;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+.brand h1{
+  font-family:"Iowan Old Style","Sitka Text",Georgia,serif;
+  font-weight:700;
+  font-size:2.2rem;
+  margin:0 0 0.2rem;
+  letter-spacing:-0.01em;
+}
+.brand .tag{
+  text-transform:uppercase;
+  letter-spacing:0.22em;
+  font-size:0.66rem;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.today{text-align:right;}
+.today .dow{
+  font-family:"Iowan Old Style","Sitka Text",Georgia,serif;
+  font-style:italic;
+  font-size:1.6rem;
+  color:var(--gold);
+  line-height:1.1;
+}
+.today .date{
+  font-size:0.88rem;
+  color:var(--ink-soft);
+}
+.grid{
+  display:grid;
+  grid-template-columns:1.15fr 0.85fr 0.75fr;
+  gap:1.2rem;
+}
+.row2{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:1.2rem;
+  margin-top:1.2rem;
+}
+.card{
+  border:1px solid var(--rule);
+  border-radius:4px;
+  padding:1.1rem 1.2rem;
+}
+.card h2{
+  font-family:"Iowan Old Style","Sitka Text",Georgia,serif;
+  font-style:italic;
+  font-weight:600;
+  font-size:1.1rem;
+  margin:0 0 0.8rem;
+}
+.cal table{width:100%; border-collapse:collapse;}
+.cal th{
+  font-size:0.66rem;
+  color:var(--ink-soft);
+  font-weight:600;
+  letter-spacing:0.06em;
+  padding-bottom:0.4rem;
+}
+.cal td{
+  text-align:center;
+  padding:0.4rem 0;
+  font-size:0.9rem;
+  font-variant-numeric:tabular-nums;
+  color:var(--ink);
+}
+.cal td.dim{color:var(--ink-faint);}
+.cal td.today span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:1.8rem;
+  height:1.8rem;
+  border:1px solid var(--gold);
+  border-radius:50%;
+  color:var(--gold);
+  font-weight:700;
+}
+.legend{
+  display:flex;
+  gap:1.1rem;
+  margin-top:0.9rem;
+  padding-top:0.8rem;
+  border-top:1px solid var(--rule);
+  font-size:0.74rem;
+  color:var(--ink-soft);
+  flex-wrap:wrap;
+}
+.legend .dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:0.4rem;}
+.legend .baby .dot{background:var(--blue);}
+.legend .clean .dot{background:var(--green);}
+.legend .meal .dot{background:var(--rose);}
+.legend .note .dot{background:var(--ink-soft);}
+.week-strip{display:flex; flex-direction:column; gap:0.5rem;}
+.wcard{
+  display:flex;
+  align-items:center;
+  gap:0.8rem;
+  border:1px solid var(--rule);
+  border-radius:4px;
+  padding:0.5rem 0.75rem;
+}
+.wcard.today{border-color:var(--gold);}
+.wcard .dow{
+  width:2.5rem;
+  font-size:0.64rem;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.wcard .dnum{
+  font-family:"Iowan Old Style","Sitka Text",Georgia,serif;
+  font-size:1.2rem;
+  width:1.7rem;
+  font-variant-numeric:tabular-nums;
+}
+.wcard.today .dnum{color:var(--gold);}
+.wcard .tag{
+  font-size:0.76rem;
+  padding:0.15rem 0.5rem;
+  border-radius:999px;
+  margin-left:auto;
+}
+.wcard .tag.clean{background:var(--green-soft); color:var(--green);}
+.wcard .tag.meal{background:var(--rose-soft); color:var(--rose);}
+.wcard .tag.empty{visibility:hidden;}
+.timeline{display:flex; flex-direction:column; gap:0.6rem;}
+.trow{display:flex; gap:0.9rem;}
+.trow .time{
+  font-family:"Iowan Old Style","Sitka Text",Georgia,serif;
+  font-style:italic;
+  color:var(--blue);
+  width:3.5rem;
+  flex-shrink:0;
+  font-size:0.86rem;
+  font-variant-numeric:tabular-nums;
+}
+.trow .what b{display:block; font-size:0.86rem;}
+.trow .what span{font-size:0.78rem; color:var(--ink-soft);}
+.notes ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.55rem;}
+.notes li{
+  font-family:"Iowan Old Style","Sitka Text",Georgia,serif;
+  font-style:italic;
+  font-size:0.9rem;
+  color:var(--ink);
+  padding-left:0.9rem;
+  border-left:2px solid var(--gold-soft);
+}
+.wins{display:flex; flex-wrap:wrap; gap:0.5rem;}
+.pill{
+  border:1px solid var(--rose);
+  color:var(--rose);
+  border-radius:999px;
+  padding:0.28rem 0.75rem;
+  font-size:0.76rem;
+}
+.rot table{width:100%; border-collapse:collapse; font-size:0.84rem;}
+.rot td{padding:0.45rem 0; border-bottom:1px solid var(--rule);}
+.rot tr:last-child td{border-bottom:none;}
+.rot .task{font-weight:600;}
+.rot .freq{color:var(--ink-soft); font-size:0.74rem;}
+.rot .who{text-align:right; font-size:0.66rem; font-weight:700; letter-spacing:0.06em;}
+.rot .who.both{color:var(--gold);}
+.rot .who.chief{color:var(--green);}
+.meals{display:flex; flex-direction:column; gap:0.45rem;}
+.mrow{display:flex; justify-content:space-between; gap:0.8rem; font-size:0.84rem;}
+.mrow .d{color:var(--ink-soft); font-weight:600; width:2.5rem; flex-shrink:0;}
+.mrow .m{text-align:right;}
+.mrow.today .d, .mrow.today .m{color:var(--gold); font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="board">
+  <div class="head">
+    <div class="brand">
+      <h1>The Home Board</h1>
+      <div class="tag">Family Command Center</div>
+    </div>
+    <div class="today">
+      <div class="dow" id="js-dow">Saturday</div>
+      <div class="date" id="js-date">August 8, 2026</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card cal">
+      <h2>August</h2>
+      <table>
+        <thead><tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="dim">26</td><td class="dim">27</td><td class="dim">28</td><td class="dim">29</td><td class="dim">30</td><td class="dim">31</td><td>1</td>
+          </tr>
+          <tr>
+            <td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>
+            <td class="today"><span>8</span></td>
+          </tr>
+          <tr>
+            <td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td>
+          </tr>
+          <tr>
+            <td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td>
+          </tr>
+          <tr>
+            <td>23</td><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td>
+          </tr>
+          <tr>
+            <td>30</td><td>31</td><td class="dim">1</td><td class="dim">2</td><td class="dim">3</td><td class="dim">4</td><td class="dim">5</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="legend">
+        <span class="baby"><span class="dot"></span>Baby</span>
+        <span class="clean"><span class="dot"></span>Cleaning</span>
+        <span class="meal"><span class="dot"></span>Meals</span>
+        <span class="note"><span class="dot"></span>Notes</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>This Week</h2>
+      <div class="week-strip">
+        <div class="wcard"><span class="dow">SUN</span><span class="dnum">2</span><span class="tag clean">bathrooms</span></div>
+        <div class="wcard"><span class="dow">MON</span><span class="dnum">3</span><span class="tag empty">—</span></div>
+        <div class="wcard"><span class="dow">TUE</span><span class="dnum">4</span><span class="tag meal">baby food prep</span></div>
+        <div class="wcard"><span class="dow">WED</span><span class="dnum">5</span><span class="tag empty">—</span></div>
+        <div class="wcard"><span class="dow">THU</span><span class="dnum">6</span><span class="tag clean">laundry</span></div>
+        <div class="wcard"><span class="dow">FRI</span><span class="dnum">7</span><span class="tag meal">date night</span></div>
+        <div class="wcard today"><span class="dow">SAT</span><span class="dnum">8</span><span class="tag clean">vacuum + mop</span></div>
+      </div>
+    </div>
+
+    <div class="card notes">
+      <h2>Notes</h2>
+      <ul>
+        <li>Pediatrician — Tues 2pm</li>
+        <li>Need more diapers, size 4</li>
+        <li>Date night — Friday?</li>
+      </ul>
+      <h2 style="margin-top:1.2rem;">This Week's Wins</h2>
+      <div class="wins">
+        <span class="pill">Bed made 6/7 days</span>
+        <span class="pill">Trades journaled</span>
+        <span class="pill">No cleaner needed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <h2>Baby Schedule</h2>
+      <div class="timeline">
+        <div class="trow"><span class="time">7:30a</span><span class="what"><b>Wake up</b><span>Bottle + morning play</span></span></div>
+        <div class="trow"><span class="time">9:30a</span><span class="what"><b>Breakfast</b><span>Solids</span></span></div>
+        <div class="trow"><span class="time">12:00p</span><span class="what"><b>Nap</b><span>~1.5–2 hrs</span></span></div>
+        <div class="trow"><span class="time">1:00p</span><span class="what"><b>Lunch</b><span>Solids</span></span></div>
+        <div class="trow"><span class="time">5:30p</span><span class="what"><b>Dinner</b><span>Solids + bottle</span></span></div>
+        <div class="trow"><span class="time">8:00p</span><span class="what"><b>Bedtime routine</b><span>Bath → book → down by 8:30</span></span></div>
+      </div>
+    </div>
+
+    <div class="card rot">
+      <h2>Cleaning Rotation</h2>
+      <table>
+        <tr><td><div class="task">Kitchen wipe-down</div><div class="freq">Daily</div></td><td class="who both">BOTH</td></tr>
+        <tr><td><div class="task">Vacuum + mop</div><div class="freq">Weekly — Sat</div></td><td class="who chief">CHIEF</td></tr>
+        <tr><td><div class="task">Laundry</div><div class="freq">Twice weekly</div></td><td class="who both">BOTH</td></tr>
+        <tr><td><div class="task">Bathrooms</div><div class="freq">Weekly — Sun</div></td><td class="who chief">CHIEF</td></tr>
+        <tr><td><div class="task">Nursery tidy</div><div class="freq">Daily</div></td><td class="who both">BOTH</td></tr>
+        <tr><td><div class="task">Deep clean</div><div class="freq">Monthly</div></td><td class="who both">BOTH</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Meal Plan</h2>
+      <div class="meals">
+        <div class="mrow"><span class="d">Sun</span><span class="m">Sheet pan chicken + veg</span></div>
+        <div class="mrow"><span class="d">Mon</span><span class="m">Turkey chili (prepped)</span></div>
+        <div class="mrow"><span class="d">Tue</span><span class="m">Baby food prep day</span></div>
+        <div class="mrow"><span class="d">Wed</span><span class="m">Stir fry</span></div>
+        <div class="mrow"><span class="d">Thu</span><span class="m">Leftovers</span></div>
+        <div class="mrow"><span class="d">Fri</span><span class="m">Date night — out</span></div>
+        <div class="mrow today"><span class="d">Sat</span><span class="m">Tacos</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-reload so a fresh git pull on the Pi shows up without touching the screen.
+  // Also picks up any future live-data wiring (Sheets/Calendar) on the same cadence.
+  setTimeout(() => location.reload(), 5 * 60 * 1000);
+</script>
+</body>
+</html>

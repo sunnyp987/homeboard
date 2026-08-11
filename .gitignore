@@ -1,0 +1,4 @@
+# Any future Sheets/Calendar API credentials go here — never commit these.
+config.json
+credentials.json
+*.env

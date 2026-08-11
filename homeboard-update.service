@@ -1,0 +1,10 @@
+[Unit]
+Description=Pull latest Home Board dashboard from git
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/pi/homeboard
+ExecStart=/usr/bin/git pull --ff-only
+User=pi

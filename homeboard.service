@@ -1,0 +1,13 @@
+[Unit]
+Description=Home Board dashboard file server
+After=network.target
+
+[Service]
+WorkingDirectory=/home/pi/homeboard
+ExecStart=/usr/bin/python3 -m http.server 8080
+Restart=always
+RestartSec=3
+User=pi
+
+[Install]
+WantedBy=multi-user.target
