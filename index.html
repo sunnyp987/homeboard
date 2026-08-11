@@ -437,6 +437,55 @@ body{
       ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
   }
 
+  // --- Sheet-driven cards -------------------------------------------------
+  // Each renderer leaves the card's existing markup alone when its tab is
+  // empty or missing, so a Sheets outage degrades to the last-known layout
+  // rather than five blank boxes.
+
+  function renderMeals(rows) {
+    if (!rows || !rows.length) return;
+    const todayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][now.getDay()];
+    document.querySelector('.meals').innerHTML = rows.map(r => {
+      const day = r.Day || '';
+      const meal = r.Meal + (r.Note ? ' (' + r.Note + ')' : '');
+      const cls = day.slice(0, 3).toLowerCase() === todayName.toLowerCase() ? ' today' : '';
+      return '<div class="mrow' + cls + '"><span class="d">' + esc(day) +
+             '</span><span class="m">' + esc(meal) + '</span></div>';
+    }).join('');
+  }
+
+  function renderCleaning(rows) {
+    if (!rows || !rows.length) return;
+    document.querySelector('.rot table').innerHTML = rows.map(r => {
+      const who = (r.Assigned || '').trim();
+      const cls = who.toLowerCase() === 'chief' ? 'chief' : 'both';
+      return '<tr><td><div class="task">' + esc(r.Task) + '</div>' +
+             '<div class="freq">' + esc(r.Frequency || '') + '</div></td>' +
+             '<td class="who ' + cls + '">' + esc(who.toUpperCase()) + '</td></tr>';
+    }).join('');
+  }
+
+  function renderBaby(rows) {
+    if (!rows || !rows.length) return;
+    document.querySelector('.timeline').innerHTML = rows.map(r =>
+      '<div class="trow"><span class="time">' + esc(r.Time || '') + '</span>' +
+      '<span class="what"><b>' + esc(r.Event || '') + '</b>' +
+      '<span>' + esc(r.Detail || '') + '</span></span></div>'
+    ).join('');
+  }
+
+  function renderNotes(rows) {
+    if (!rows || !rows.length) return;
+    document.querySelector('.notes ul').innerHTML =
+      rows.map(r => '<li>' + esc(r.Note) + '</li>').join('');
+  }
+
+  function renderWins(rows) {
+    if (!rows || !rows.length) return;
+    document.querySelector('.wins').innerHTML =
+      rows.map(r => '<span class="pill">' + esc(r.Win) + '</span>').join('');
+  }
+
   // Render with whatever we have. If the fetch fails the board still shows a
   // correct, current calendar — it just has no events on it, which beats a
   // blank screen or a page stuck on last month.
@@ -446,6 +495,13 @@ body{
       const events = data.days || {};
       renderMonth(events);
       renderWeek(events);
+
+      const s = data.sheets || {};
+      renderMeals(s.meals);
+      renderCleaning(s.cleaning);
+      renderBaby(s.baby);
+      renderNotes(s.notes);
+      renderWins(s.wins);
 
       // Flag a feed that has stopped updating — otherwise stale events look
       // exactly like real ones.

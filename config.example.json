@@ -1,5 +1,6 @@
 {
   "_comment": "Copy to config.json on the Pi and fill in. config.json is gitignored — the iCal URL is a credential, anyone with it can read the whole calendar.",
   "ical_url": "https://calendar.google.com/calendar/ical/.../private-.../basic.ics",
+  "sheet_id": "the long id from your Sheet's URL, between /d/ and /edit",
   "timezone": "America/Chicago"
 }
