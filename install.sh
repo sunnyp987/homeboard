@@ -3,14 +3,11 @@
 # Run this ONCE, over SSH, right after first boot. Reboots itself at the end.
 set -euo pipefail
 
-# --- EDIT THIS before running -------------------------------------------
-REPO_URL="https://github.com/YOUR-USERNAME/homeboard.git"
-# --------------------------------------------------------------------------
-
-APP_DIR="/home/pi/homeboard"
-SETUP_DIR="$APP_DIR/pi-setup"
+REPO_URL="https://github.com/sunnyp987/homeboard.git"
+APP_USER="homeboard"
+APP_DIR="/home/$APP_USER/homeboard"
 CONFIG_TXT="/boot/firmware/config.txt"
-[ -f "$CONFIG_TXT" ] || CONFIG_TXT="/boot/config.txt"   # pre-Bookworm path fallback
+[ -f "$CONFIG_TXT" ] || CONFIG_TXT="/boot/config.txt"
 
 echo "==> Updating system packages"
 sudo apt update
@@ -28,16 +25,16 @@ else
 fi
 
 echo "==> Installing kiosk autostart"
-cp "$SETUP_DIR/xinitrc" /home/pi/.xinitrc
-chmod +x /home/pi/.xinitrc
-if ! grep -q "startx -- -nocursor" /home/pi/.bash_profile 2>/dev/null; then
-  cat "$SETUP_DIR/bash_profile_append.sh" >> /home/pi/.bash_profile
+cp "$APP_DIR/xinitrc" "/home/$APP_USER/.xinitrc"
+chmod +x "/home/$APP_USER/.xinitrc"
+if ! grep -q "startx -- -nocursor" "/home/$APP_USER/.bash_profile" 2>/dev/null; then
+  cat "$APP_DIR/bash_profile_append.sh" >> "/home/$APP_USER/.bash_profile"
 fi
 
 echo "==> Installing systemd services"
-sudo cp "$SETUP_DIR/homeboard.service" /etc/systemd/system/
-sudo cp "$SETUP_DIR/homeboard-update.service" /etc/systemd/system/
-sudo cp "$SETUP_DIR/homeboard-update.timer" /etc/systemd/system/
+sudo cp "$APP_DIR/homeboard.service" /etc/systemd/system/
+sudo cp "$APP_DIR/homeboard-update.service" /etc/systemd/system/
+sudo cp "$APP_DIR/homeboard-update.timer" /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable homeboard.service
 sudo systemctl enable homeboard-update.timer
