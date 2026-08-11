@@ -14,8 +14,10 @@ sudo apt update
 sudo apt full-upgrade -y
 
 echo "==> Installing kiosk + git dependencies"
-sudo apt install --no-install-recommends -y \
-  xserver-xorg x11-xserver-utils xinit chromium-browser unclutter git
+# cage = minimal Wayland kiosk compositor. Deliberately NOT X11/xinit:
+# on Bookworm + Pi 2, the Xorg modesetting handoff leaves the display black
+# even though Xorg reports a valid 1080p mode and logs no errors.
+sudo apt install --no-install-recommends -y cage chromium-browser git
 
 echo "==> Fetching the dashboard"
 if [ -d "$APP_DIR/.git" ]; then
@@ -25,9 +27,7 @@ else
 fi
 
 echo "==> Installing kiosk autostart"
-cp "$APP_DIR/xinitrc" "/home/$APP_USER/.xinitrc"
-chmod +x "/home/$APP_USER/.xinitrc"
-if ! grep -q "startx -- -nocursor" "/home/$APP_USER/.bash_profile" 2>/dev/null; then
+if ! grep -q "cage --" "/home/$APP_USER/.bash_profile" 2>/dev/null; then
   cat "$APP_DIR/bash_profile_append.sh" >> "/home/$APP_USER/.bash_profile"
 fi
 
@@ -41,6 +41,11 @@ sudo systemctl enable homeboard-update.timer
 
 echo "==> Enabling console auto-login (needed for the kiosk to start unattended)"
 sudo raspi-config nonint do_boot_behaviour B2
+
+echo "==> Boot config: force HDMI output even when no display is attached at boot"
+if ! grep -q "hdmi_force_hotplug" "$CONFIG_TXT" 2>/dev/null; then
+  echo "hdmi_force_hotplug=1" | sudo tee -a "$CONFIG_TXT" > /dev/null
+fi
 
 echo "==> Disabling the Pi's activity LED"
 if ! grep -q "dtparam=act_led_trigger" "$CONFIG_TXT" 2>/dev/null; then
